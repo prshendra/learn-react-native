@@ -1,11 +1,30 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from "react";
+import { StyleSheet, View, Text } from "react-native";
+
+import CourseGoalInput from "./components/CourseGoalInput";
+import CourseGoalList from "./components/CourseGoalList";
 
 export default function App() {
+  const [courseGoals, setCourseGoals] = useState([{ text: "asu", id: "xxx" }]);
+
+  function addCourseGoal(courseGoal) {
+    setCourseGoals((cGoals) => [
+      ...cGoals,
+      {
+        text: courseGoal,
+        id: Math.random().toString(),
+      },
+    ]);
+  }
+
   return (
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
+      <View style={styles.goalControl}>
+        <CourseGoalInput onPress={addCourseGoal} />
+      </View>
+      <View style={styles.goalList}>
+        <CourseGoalList courseGoals={courseGoals} />
+      </View>
     </View>
   );
 }
@@ -13,8 +32,12 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    margin: 20,
+  },
+  goalControl: {
+    flex: 1,
+  },
+  goalList: {
+    flex: 6,
   },
 });
