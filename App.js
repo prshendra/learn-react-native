@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { StyleSheet, View, Text } from "react-native";
+import { StyleSheet, View, Modal, Button } from "react-native";
+import { StatusBar } from "expo-status-bar";
 
 import CourseGoalInput from "./components/CourseGoalInput";
 import CourseGoalList from "./components/CourseGoalList";
 
 export default function App() {
-  const [courseGoals, setCourseGoals] = useState([{ text: "asu", id: "xxx" }]);
+  const [isModalVisible, setIsModalVisible] = useState(false)
+  const [courseGoals, setCourseGoals] = useState([]);
 
   function addCourseGoal(courseGoal) {
     setCourseGoals((cGoals) => [
@@ -17,15 +19,36 @@ export default function App() {
     ]);
   }
 
+  function handleDeleteGoal(goalId) {
+    setCourseGoals((courseGoals) => courseGoals.filter(c => c.id !== goalId))
+  }
+
   return (
-    <View style={styles.container}>
-      <View style={styles.goalControl}>
-        <CourseGoalInput onPress={addCourseGoal} />
+    <>
+      <StatusBar style="light" />
+      <View style={styles.container}>
+        <View style={styles.goalControl}>
+          <Button
+            title="Add Course Goal"
+            onPress={() => setIsModalVisible(true)}
+          />
+        </View>
+        <View style={styles.goalList}>
+          <CourseGoalList
+            courseGoals={courseGoals}
+            onDeleteGoal={handleDeleteGoal}
+          />
+        </View>
+        <Modal visible={isModalVisible}
+          animationType="slide"
+        >
+          <CourseGoalInput
+            onAddGoal={addCourseGoal}
+            closeModal={() => setIsModalVisible(false)}
+          />
+        </Modal>
       </View>
-      <View style={styles.goalList}>
-        <CourseGoalList courseGoals={courseGoals} />
-      </View>
-    </View>
+    </>
   );
 }
 
@@ -36,6 +59,7 @@ const styles = StyleSheet.create({
   },
   goalControl: {
     flex: 1,
+    justifyContent: 'center'
   },
   goalList: {
     flex: 6,
