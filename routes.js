@@ -1,7 +1,6 @@
-const routes = {
-  mealsCategories: "MealsCategories",
-  mealsOverview: "MealsOverview",
-  mealDetail: "MealDetail",
+const Routes = {
+  AllExpenses: "all-expenses",
+  Recent: "recent",
 };
 
-export default routes;
+export default Routes;
