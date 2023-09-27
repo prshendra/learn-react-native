@@ -1,15 +1,8 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
-import Colors from "../../constants/colors";
 import { useNavigation } from "@react-navigation/native";
 
-function getDateStr(d) {
-  const day = d.getDate();
-  const month = d.getMonth() + 1;
-  const year = d.getFullYear();
-  const str = `${day}/${month}/${year}`;
-
-  return str;
-}
+import Colors from "../../constants/colors";
+import { getDateStr } from "../../util/date";
 
 function ExpenseItem({ expense }) {
   const navigation = useNavigation();

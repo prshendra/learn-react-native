@@ -1,15 +1,16 @@
 import { useContext, useEffect, useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
-import Button from "../components/ui/Button";
+import { View, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+
 import { ExpensesContext } from "../store/context/expenses-context";
+import ExpenseForm from "../components/expenses/ExpenseForm";
 
 /**
  * Screen for managing an Expense or adding new Expense
  */
 function ManageExpenseScreen({ navigation, route }) {
   const expensesCtx = useContext(ExpensesContext);
-  const [expense, setExpense] = useState({});
+  const [expense, setExpense] = useState(null);
   const id = route.params?.id;
 
   const handleDeleteExpense = () => {
@@ -17,23 +18,19 @@ function ManageExpenseScreen({ navigation, route }) {
     navigation.goBack();
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = (expense) => {
+    console.log('e', expense)
+    // if id is true, screen is in edit-mode. Otherwise, screen is in add-mode
     if (id) {
-      // if id is true, then mode is edit
       expensesCtx.updateExpense({
+        id: id,
         ...expense,
-        title: "Updated Expense!",
-        amount: 200.99,
-        createAt: new Date(),
       });
     } else {
-      // otherwise, mode is add
-      expensesCtx.addExpense({
-        title: "New Expense",
-        amount: 99.99,
-        createdAt: new Date(),
-      });
+      expensesCtx.addExpense(expense);
     }
+
+    // go back after edit/add action
     navigation.goBack();
   };
 
@@ -50,21 +47,10 @@ function ManageExpenseScreen({ navigation, route }) {
     });
   }, [navigation, id]);
 
-  // if id is passed, screen is in "edit" mode.
-  // Otherwise, in "add" mode
-  if (id) {
-    // Edit mode
-    return (
-      <View style={styles.screen}>
-        {/* <Text>{expense?.title}</Text>
-        <Text>{expense?.createdAt.toString()}</Text>
-        <Text>{expense?.amount}</Text> */}
-        <View style={styles.buttonsContainer}>
-          <Button mode="flat" onPress={handleCancel}>
-            Cancel
-          </Button>
-          <Button onPress={handleConfirm}>Confirm</Button>
-        </View>
+  return (
+    <View style={styles.screen}>
+      <ExpenseForm expense={expense} onConfirm={handleConfirm} onCancel={handleCancel} />
+      {id && (
         <View style={styles.deleteButtonContainer}>
           <Ionicons.Button
             name="trash"
@@ -73,14 +59,7 @@ function ManageExpenseScreen({ navigation, route }) {
             onPress={handleDeleteExpense}
           />
         </View>
-      </View>
-    );
-  }
-
-  // Add mode
-  return (
-    <View>
-      <Text>Add expense</Text>
+      )}
     </View>
   );
 }
@@ -92,15 +71,6 @@ const styles = StyleSheet.create({
     padding: 15,
     gap: 10,
     alignItems: "center",
-  },
-  buttonsContainer: {
-    flexDirection: "row",
-    gap: 10,
-    borderBottomColor: "#ccc",
-    borderBottomWidth: 3,
-    paddingBottom: 10,
-    width: "100%",
-    justifyContent: "center",
   },
   deleteButtonContainer: {
     flexDirection: "row",
