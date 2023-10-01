@@ -4,30 +4,42 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { ExpensesContext } from "../store/context/expenses-context";
 import ExpenseForm from "../components/expenses/ExpenseForm";
+import { createExpense, updateExpense, deleteExpense } from "../util/http";
+import LoadingSpinner from "../components/ui/LoadingSpinner";
 
 /**
  * Screen for managing an Expense or adding new Expense
  */
 function ManageExpenseScreen({ navigation, route }) {
+  const [isLoading, setIsLoading] = useState(false)
   const expensesCtx = useContext(ExpensesContext);
   const [expense, setExpense] = useState(null);
   const id = route.params?.id;
 
-  const handleDeleteExpense = () => {
+  const handleDeleteExpense = async () => {
+    setIsLoading(true)
+    await deleteExpense(id)
     expensesCtx.deleteExpense(id);
     navigation.goBack();
   };
 
-  const handleConfirm = (expense) => {
+  const handleConfirm = async (expense) => {
+    setIsLoading(true)
     console.log('e', expense)
+    // remove id to the request body, so it's not clutter the firebase
+    const expenseId = expense.id
+    delete expense.id
+
     // if id is true, screen is in edit-mode. Otherwise, screen is in add-mode
     if (id) {
+      await updateExpense(expenseId, expense)
       expensesCtx.updateExpense({
         id: id,
         ...expense,
       });
     } else {
-      expensesCtx.addExpense(expense);
+      const expenseId = await createExpense(expense).then()
+      expensesCtx.addExpense({ ...expense, id: expenseId });
     }
 
     // go back after edit/add action
@@ -46,6 +58,10 @@ function ManageExpenseScreen({ navigation, route }) {
       title: id ? "Manage Expense" : "Add Expense",
     });
   }, [navigation, id]);
+
+  if (isLoading) {
+    return <LoadingSpinner />
+  }
 
   return (
     <View style={styles.screen}>
