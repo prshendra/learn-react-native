@@ -1,77 +1,74 @@
-import "react-native-gesture-handler";
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { StatusBar } from 'expo-status-bar';
+import { useContext } from 'react';
 
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Ionicons } from "@expo/vector-icons";
+import LoginScreen from './screens/LoginScreen';
+import SignupScreen from './screens/SignupScreen';
+import WelcomeScreen from './screens/WelcomeScreen';
+import { Colors } from './constants/styles';
+import AuthContextProvider, { AuthContext } from './store/context/auth';
+import IconButton from './components/ui/IconButton';
 
-import Routes from "./routes";
-import AllExpensesScreen from "./screens/AllExpensesScreen";
-import RecentExpensesScreen from "./screens/RecentExpenseScreen";
-import ManageExpenseScreen from "./screens/ManageExpenseScreen";
-import ExpensesContextProvider from "./store/context/expenses-context";
-
-const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-function TabNavigator() {
+function AuthStack() {
   return (
-    <Tab.Navigator
-      screenOptions={({ navigation }) => ({
-        headerRight: ({ }) => (
-          <Ionicons.Button
-            name="add"
-            backgroundColor={"white"}
-            color={"black"}
-            size={22}
-            onPress={() => navigation.navigate("ManageExpense")}
-          />
-        ),
-      })}
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: Colors.primary500 },
+        headerTintColor: 'white',
+        contentStyle: { backgroundColor: Colors.primary100 },
+      }}
     >
-      <Tab.Screen
-        name={Routes.Recent}
-        component={RecentExpensesScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="timer-outline" color={color} size={size} />
-          ),
-          tabBarLabel: "Recent",
-          title: "Recent Expenses",
-        }}
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Signup" component={SignupScreen} />
+    </Stack.Navigator>
+  );
+}
+
+function AuthenticatedStack() {
+  const authCtx = useContext(AuthContext)
+
+  function handleLogout() {
+    authCtx.logout();
+  }
+
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: Colors.primary500 },
+        headerTintColor: 'white',
+        contentStyle: { backgroundColor: Colors.primary100 },
+      }}
+    >
+      <Stack.Screen
+        name="Welcome"
+        component={WelcomeScreen}
+        options={{ headerRight: () => <IconButton icon="exit" size={24} color="white" onPress={handleLogout} /> }}
       />
-      <Tab.Screen
-        name={Routes.AllExpenses}
-        component={AllExpensesScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar-outline" color={color} size={size} />
-          ),
-          tabBarLabel: "All Expenses",
-          title: "All Expenses",
-        }}
-      />
-    </Tab.Navigator>
+    </Stack.Navigator>
+  );
+}
+
+function Navigation() {
+  const authCtx = useContext(AuthContext)
+  return (
+    <NavigationContainer>
+      {!authCtx.user && <AuthStack />}
+      {authCtx.user && <AuthenticatedStack />}
+
+    </NavigationContainer>
   );
 }
 
 export default function App() {
   return (
-    <ExpensesContextProvider>
-      <NavigationContainer>
-        <Stack.Navigator>
-          <Stack.Screen
-            name="Tabs"
-            component={TabNavigator}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="ManageExpense"
-            component={ManageExpenseScreen}
-            options={{ presentation: "modal" }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </ExpensesContextProvider>
+    <>
+      <StatusBar style="light" />
+      <AuthContextProvider>
+        <Navigation />
+      </AuthContextProvider>
+    </>
   );
 }
