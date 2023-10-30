@@ -6,11 +6,6 @@ import LoadingOverlay from "../components/ui/LoadingOverlay";
 import { useForegroundPermissions } from "expo-location";
 import { getCurrentLocation } from "../util/location";
 
-/**
-When MapScreen is called with location, it means the map is read only (called from PlaceDetail screen).
-But, when MapScreen is called without location, it means the map is called from AddPlace screen,
-therefore it should start from user's current location.
-*/
 function MapScreen({ navigation, route }) {
   const [locationPermission, requestLocationPermission] =
     useForegroundPermissions();
@@ -28,7 +23,7 @@ function MapScreen({ navigation, route }) {
   }, [navigation, location]);
 
   useEffect(() => {
-    // if user passed in location to view, then it becomes read-only map
+    // if viewedLocation is truthy, then set it as initial region
     if (viewedLocation) {
       setLocation({
         ...viewedLocation,
