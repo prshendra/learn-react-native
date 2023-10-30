@@ -1,19 +1,22 @@
 import { useEffect, useState, useCallback } from "react";
-import { StyleSheet, Alert } from "react-native";
+import { StyleSheet, Alert, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import MapView, { Marker } from "react-native-maps";
+import LoadingOverlay from "../components/ui/LoadingOverlay";
+import { useForegroundPermissions } from "expo-location";
+import { getCurrentLocation } from "../util/location";
 
-function MapScreen({ navigation }) {
-  const initialRegion = {
-    latitude: 37.78,
-    longitude: -122.43,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
-  };
-  const [location, setLocation] = useState({
-    latitude: initialRegion.latitude,
-    longitude: initialRegion.longitude,
-  });
+/**
+When MapScreen is called with location, it means the map is read only (called from PlaceDetail screen).
+But, when MapScreen is called without location, it means the map is called from AddPlace screen,
+therefore it should start from user's current location.
+*/
+function MapScreen({ navigation, route }) {
+  const [locationPermission, requestLocationPermission] =
+    useForegroundPermissions();
+  const [location, setLocation] = useState();
+
+  const viewedLocation = route.params?.location;
 
   const handleSaveLocation = useCallback(() => {
     if (!location) {
@@ -25,37 +28,82 @@ function MapScreen({ navigation }) {
   }, [navigation, location]);
 
   useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <Ionicons.Button
-          name="save"
-          backgroundColor={"white"}
-          color={"black"}
-          iconStyle={{ marginRight: 0 }}
-          size={20}
-          onPress={handleSaveLocation}
-        />
-      ),
-    });
-  }, [navigation, handleSaveLocation]);
+    // if user passed in location to view, then it becomes read-only map
+    if (viewedLocation) {
+      setLocation({
+        ...viewedLocation,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      });
+      return;
+    }
+
+    // otherwise, used device's location as map's initial region
+    if (locationPermission) {
+      (async () => {
+        // get user's current location
+        const location = await getCurrentLocation(
+          locationPermission,
+          requestLocationPermission,
+        );
+        setLocation({
+          ...location,
+          latitudeDelta: 0.0922,
+          longitudeDelta: 0.0421,
+        });
+      })();
+    }
+  }, [locationPermission, viewedLocation]);
+
+  useEffect(() => {
+    if (!viewedLocation) {
+      navigation.setOptions({
+        headerRight: () => (
+          <Ionicons.Button
+            name="save"
+            backgroundColor={"white"}
+            color={"black"}
+            iconStyle={{ marginRight: 0 }}
+            size={20}
+            onPress={handleSaveLocation}
+          />
+        ),
+      });
+    }
+  }, [navigation, handleSaveLocation, viewedLocation]);
 
   function handleSelectLocation(event) {
+    if (viewedLocation) {
+      // for read only mode, don't allow to move the marker
+      return;
+    }
+
     setLocation({
       latitude: event.nativeEvent.coordinate.latitude,
       longitude: event.nativeEvent.coordinate.longitude,
     });
   }
 
+  if (!location) {
+    return (
+      <View style={styles.fallbackScreen}>
+        <LoadingOverlay />
+      </View>
+    );
+  }
+
   return (
     <MapView
       style={styles.map}
-      initialRegion={initialRegion}
+      initialRegion={location}
       onPress={handleSelectLocation}
     >
       <Marker
-        coordinate={location}
-        title={"Hendra"}
-        description={"Ini rumah hendra"}
+        coordinate={{
+          latitude: location.latitude,
+          longitude: location.longitude,
+        }}
+        title={"Location"}
       />
     </MapView>
   );
@@ -65,6 +113,9 @@ export default MapScreen;
 
 const styles = StyleSheet.create({
   map: {
+    flex: 1,
+  },
+  fallbackScreen: {
     flex: 1,
   },
 });

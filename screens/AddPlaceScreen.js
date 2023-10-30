@@ -5,8 +5,10 @@ import ImagePicker from "../components/place/ImagePicker";
 import LocationPicker from "../components/place/LocationPicker";
 import { useState } from "react";
 import { getLocationAddress } from "../util/location";
+import { Place } from "../models/Place";
+import { insertPlace } from "../util/database";
 
-function AddPlaceScreen() {
+function AddPlaceScreen({ navigation }) {
   const [title, setTitle] = useState("");
   const [imageUri, setImageUri] = useState("");
   /*
@@ -15,8 +17,6 @@ function AddPlaceScreen() {
   const [location, setLocation] = useState();
 
   async function handleSavePlace() {
-    // save to SQLite database
-
     // validate form input
     if (title === "" || imageUri === "" || !location) {
       Alert.alert("Form is invalid!", "Make sure all value is inputted!");
@@ -27,9 +27,12 @@ function AddPlaceScreen() {
       location.latitude,
       location.longitude,
     );
-    Alert.alert("Your Address", address);
 
-    console.log(address);
+    const locationWithAddress = { ...location, address: address };
+    const place = new Place(title, imageUri, locationWithAddress);
+    // save to database
+    await insertPlace(place);
+    navigation.navigate("FavoritePlaces");
   }
 
   return (

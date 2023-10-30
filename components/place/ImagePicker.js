@@ -47,7 +47,6 @@ function ImagePicker({ onPickImage }) {
       return;
     }
 
-    // console.log(image);
     const imageUri = image.assets[0].uri;
     setImage(imageUri);
     onPickImage(imageUri);
